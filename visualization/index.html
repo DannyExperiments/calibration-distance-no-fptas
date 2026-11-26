@@ -1,0 +1,183 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Why exact anchor loads matter</title>
+<style>
+:root{color-scheme:dark;--bg:#0b1627;--panel:#13283f;--line:#405f7c;--text:#eff7fc;--sub:#bfd1e1;--green:#65e1ba;--blue:#88c4ff;--gold:#f9d77b}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font:1rem/1.55 system-ui,sans-serif}
+main{max-width:68rem;margin:auto;padding:clamp(1rem,4vw,2.7rem)}
+h1{font-size:clamp(1.8rem,4.6vw,3.1rem);line-height:1.12;margin:0 0 .55rem}
+h2{font-size:1.28rem;margin:0 0 .6rem}
+p{margin:.3rem 0 .9rem}
+.intro,.note{max-width:74ch;color:var(--sub)}
+.layout{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(16rem,.75fr);gap:1rem;align-items:start}
+.card{min-width:0;padding:1rem;background:var(--panel);border:1px solid var(--line);border-radius:1rem}
+figure{margin:0}
+canvas{display:block;width:100%;height:auto;aspect-ratio:1.47}
+figcaption{color:var(--sub);font-size:.94rem}
+label{display:block;font-weight:650;color:var(--sub)}
+select,button,input{width:100%;min-height:2.55rem;color:var(--text);font:inherit;accent-color:var(--green)}
+select,button{background:#1e3854;border:1px solid var(--line);border-radius:.45rem;padding:.25rem .55rem}
+label+select,label+input,button.optimize{margin:.18rem 0 .6rem}
+button{cursor:pointer}
+button.optimize{font-weight:700;color:var(--green)}
+.items{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:.5rem;margin:.4rem 0 .65rem}
+.item{display:flex;flex-direction:column;align-items:center;line-height:1.18;padding:.42rem .15rem}
+.item strong{font-size:1.12rem}
+.item small{font-size:.76rem;color:var(--sub)}
+table{width:100%;border-collapse:collapse;margin:.25rem 0}
+th,td{border-top:1px solid var(--line);text-align:left;vertical-align:top;padding:.28rem .12rem}
+td{padding-left:.45rem}
+output{display:block;font-weight:700;color:var(--gold);margin:.45rem 0}
+.note{margin-top:1rem}
+@media(max-width:740px){.layout{grid-template-columns:1fr}main{padding:1rem}}
+</style>
+<main>
+<h1>Why exact anchor loads matter</h1>
+<p class="intro">Send six indivisible weights to two fixed anchor pairs. A load of 15 leaves its anchor forecast unchanged. Changing the load moves the calibrated prediction.</p>
+<div class="layout">
+<figure class="card">
+<canvas id="graph" width="700" height="476" role="img" aria-label="Rotating stacks of ordinary weights"></canvas>
+<figcaption>The stacks show ordinary masses to scale. The dashed guides mark load 15. The heavy anchor pairs are drawn as bases.</figcaption>
+</figure>
+<section class="card">
+<h2>Assign the ordinary weights</h2>
+<label for="case">Worked case</label>
+<select id="case"><option value="0">Two exact loads are possible</option><option value="1">All item weights are even</option></select>
+<p>Press a weight to move it between the anchors and the outside bucket.</p>
+<div id="items" class="items"></div>
+<button id="best" class="optimize" type="button">Find the best assignment</button>
+<label for="angle">Rotate the load stacks</label>
+<input id="angle" type="range" min="14" max="61" value="36">
+<table aria-label="Exact loss quantities"><tbody>
+<tr><th scope="row">Anchor 1 load and mean</th><td id="first"></td></tr>
+<tr><th scope="row">Anchor 2 load and mean</th><td id="second"></td></tr>
+<tr><th scope="row">Ordinary mass outside</th><td id="outside"></td></tr>
+<tr><th scope="row">Excess above baseline</th><td id="excess"></td></tr>
+<tr><th scope="row">Deficit lower bound</th><td id="gap"></td></tr>
+</tbody></table>
+<output id="status" aria-live="polite"></output>
+</section>
+</div>
+<p class="note">The two fixed forecasts are 7/24 and 1/3. All displayed loss quantities are before normalization by the total mass 14,430. The separate exact replay checks all partitions, including those with mixed or split anchor pairs.</p>
+</main>
+<script>
+"use strict";
+const get=id=>document.getElementById(id);
+const selector=get("case"), slider=get("angle"), canvas=get("graph"), context=canvas.getContext("2d");
+const cases=[[4,4,5,5,6,6],[4,4,4,6,6,6]];
+const destinations=["Outside","Anchor 1","Anchor 2"];
+const palette=[["#22725f","#164c50","#3ba68a"],["#327398","#225376","#56a0c9"]];
+const bg="#0b1627", ink="#eff7fc", gold="#f9d77b", good="#65e1ba", bad="#ffad7c";
+const target=15, mass=7200;
+let weights=cases[0], where=[1,2,1,2,1,2];
+const abs=x=>x<0n?-x:x;
+function fraction(n,d=1n) {
+  let a=abs(n), b=d;
+  while (b) {[a,b]=[b,a%b];}
+  return [n/a,d/a];
+}
+const add=([a,b],[c,d])=>fraction(a*d+b*c,b*d);
+const less=([a,b],[c,d])=>a*d<b*c;
+const show=([n,d])=>d===1n?String(n):n+"/"+d;
+const means=[7,8].map(q=>Array.from({length:31},(_,s)=>fraction(BigInt(q*(mass+target)-24*target+24*s),BigInt(24*(mass+s)))));
+const costs=means.map((row,j)=>row.map(([a,b],s)=>
+  fraction(BigInt(s)*a*24n+BigInt(mass)*abs(24n*a-BigInt(7+j)*b),24n*b)));
+const baseline=[75n,8n];
+
+function evaluate(assign){
+  const buckets=[[],[],[]];
+  weights.forEach((w,i)=>buckets[assign[i]].push(w));
+  const load=buckets.map(items=>items.reduce((a,b)=>a+b,0));
+  const loss=add(add(costs[0][load[1]],costs[1][load[2]]),[BigInt(load[0]),1n]);
+  const excess=add(loss,[-baseline[0],baseline[1]]);
+  const deficit=Math.max(0,target-load[1])+Math.max(0,target-load[2]);
+  return {buckets,load,excess,deficit};
+}
+function draw(buckets){
+  context.clearRect(0,0,canvas.width,canvas.height);
+  const zAngle=Number(slider.value)*Math.PI/180;
+  function text(label,point,style,size){
+    context.font="700 "+size+"px system-ui";context.textAlign="center";
+    context.textBaseline="middle";context.fillStyle=style;context.fillText(label,...point);
+  }
+  for(const j of [0,1]){
+    const x=175+350*j, load=buckets[j+1].reduce((a,b)=>a+b,0);
+    const project=([a,b,z])=>[x+a*Math.cos(zAngle)-b*Math.sin(zAngle),374-10*z-.44*(a*Math.sin(zAngle)+b*Math.cos(zAngle))];
+    function prism(lo,hi,colors,w=115,d=65){
+      const u=w/2,v=d/2;
+      const sides=[
+        [[-u,-v,lo],[u,-v,lo],[u,-v,hi],[-u,-v,hi]],
+        [[-u,-v,lo],[-u,v,lo],[-u,v,hi],[-u,-v,hi]],
+        [[-u,-v,hi],[u,-v,hi],[u,v,hi],[-u,v,hi]],
+      ];
+      sides.forEach((side,i)=>{
+        context.beginPath();side.map(project).forEach(([a,b],k)=>k?context.lineTo(a,b):context.moveTo(a,b));
+        context.closePath();context.fillStyle=colors[i];context.fill();
+        context.strokeStyle=bg;context.lineWidth=3;context.stroke();
+      });
+    }
+    text("Anchor "+(j+1)+" · forecast "+["7/24","1/3"][j],[x,40],ink,29);
+    prism(-2,0,["#39485a","#2b3748","#526478"],132,75);
+    let base=0;
+    for(const weight of buckets[j+1]){
+      prism(base,base+weight,palette[j]);
+      text(String(weight),project([0,-32.5,base+weight/2]),ink,24);
+      base+=weight;
+    }
+    context.beginPath();context.moveTo(...project([-99,0,15]));context.lineTo(...project([99,0,15]));
+    context.strokeStyle=gold;context.lineWidth=3;context.setLineDash([8,9]);context.stroke();context.setLineDash([]);
+    const end=project([117,0,15]);
+    text("15",end,gold,23);
+    text("Load "+load,[x,451],load===15?good:bad,30);
+  }
+}
+function refresh(){
+  const {buckets,load,deficit,excess}=evaluate(where);
+  get("first").textContent=load[1]+" · "+show(means[0][load[1]]);
+  get("second").textContent=load[2]+" · "+show(means[1][load[2]]);
+  get("outside").textContent=String(load[0]);
+  get("excess").textContent=show(excess);
+  get("gap").textContent=show(fraction(BigInt(2*deficit),3n));
+  get("status").textContent=deficit===0?"Both loads meet the target.":"Total integer deficit: "+deficit;
+  canvas.setAttribute("aria-label","Anchor weights "+load[1]+" and "+load[2]+", with target 15.");
+  [...get("items").children].forEach((button,i)=>{
+    button.lastElementChild.textContent=destinations[where[i]];
+    button.setAttribute("aria-label","Item "+(i+1)+", weight "+weights[i]+", "+destinations[where[i]]);
+  });
+  draw(buckets);
+}
+function optimize(){
+  let best=evaluate(where).excess, chosen=where;
+  for(let code=0;code<3**weights.length;code++){
+    let digits=code;
+    const assign=weights.map(()=>{const digit=digits%3;digits=Math.floor(digits/3);return digit;});
+    const result=evaluate(assign);
+    if(less(result.excess,best)){best=result.excess;chosen=assign;}
+  }
+  where=chosen;
+  refresh();
+}
+function reset(){
+  const index=Number(selector.value);
+  weights=cases[index];where=index===0?[1,2,1,2,1,2]:[1,2,2,1,1,2];
+  const panel=get("items");
+  panel.replaceChildren();
+  weights.forEach((weight,i)=>{
+    const button=document.createElement("button");
+    button.className="item";button.type="button";
+    const number=document.createElement("strong"), assignment=document.createElement("small");
+    number.textContent=String(weight);button.append(number,assignment);
+    button.addEventListener("click",()=>{where[i]=(where[i]+1)%3;refresh();});
+    panel.append(button);
+  });
+  refresh();
+}
+selector.addEventListener("input",reset);
+slider.addEventListener("input",refresh);
+get("best").addEventListener("click",optimize);
+reset();
+</script>
+</html>

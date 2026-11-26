@@ -1,0 +1,17 @@
+cff-version: 1.2.0
+message: "Please cite DannyExperiments and identify the version used."
+title: "No fully polynomial additive scheme for calibration distance unless P = NP"
+type: software
+authors:
+  - name: "DannyExperiments"
+repository-code: "https://github.com/DannyExperiments/calibration-distance-no-fptas"
+version: "1.0.0"
+date-released: "2026-11-27"
+doi: "10.5281/zenodo.24571158"
+abstract: "The distance from a supplied predictor to the nearest exactly calibrated deterministic predictor has a fully polynomial additive approximation scheme if and only if P = NP."
+keywords:
+  - "calibration distance"
+  - "additive approximation"
+  - "strong NP-hardness"
+  - "3-PARTITION"
+  - "probabilistic calibration"

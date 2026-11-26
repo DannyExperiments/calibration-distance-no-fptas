@@ -1,0 +1,211 @@
+\documentclass[11pt,a4paper]{amsart}
+\usepackage[T1]{fontenc}
+\usepackage{amssymb}
+\usepackage[margin=1in]{geometry}
+\usepackage[hidelinks]{hyperref}
+\hypersetup{pdftitle={No fully polynomial additive scheme for calibration distance unless P = NP}}
+\urlstyle{same}
+\DeclareFontShape{OT1}{cmr}{bx}{n}{<-> cmbx10}{}
+\DeclareMathSizes{8}{8}{8}{8}
+\DeclareMathSizes{9}{9}{8}{8}
+\DeclareMathSizes{10.95}{10.95}{8}{8}
+\newtheorem{theorem}{Theorem}
+\newcommand{\caldist}{\operatorname{CalDist}}
+\title{No fully polynomial additive scheme for calibration distance unless P = NP}
+\date{}
+\begin{document}
+\begin{abstract}
+For an explicit rational distribution on a finite feature space, the
+distance from a supplied predictor to the nearest exactly calibrated
+deterministic predictor has a fully polynomial additive approximation
+scheme if and only if \(\mathrm P=\mathrm{NP}\). The hardness holds
+with noiseless binary labels and nonuniform masses. A reduction from
+strongly NP-complete 3-PARTITION forces heavy anchor pairs into distinct
+blocks. Each block has the correct calibrated mean at its target
+integer load. Any imbalance creates a normalized inverse-polynomial gap.
+\end{abstract}
+\maketitle
+
+\section{The approximation problem}
+
+Let \(D\) be a rational distribution on \(\mathcal X\times\{0,1\}\),
+where \(\mathcal X\) is finite. We may discard zero-mass atoms.
+Write \(w_x=\Pr(X=x)\), \(\mu_x=\mathbb E[Y\mid X=x]\),
+and let \(f:\mathcal X\to[0,1]\) be the given rational forecast.
+We seek
+\[
+ \caldist_D(f)=
+ \min_{g:\,\mathbb E[Y\mid g(X)]=g(X)}
+       \sum_{x\in\mathcal X}w_x\,|f(x)-g(x)|.
+\]
+The repaired predictor \(g\) is a deterministic function of \(x\).
+Every feature atom is assigned whole to one output. The repair may
+send two atoms with the same original forecast to different outputs.
+
+By the partition characterization of Qiao \cite[Fact~1]{qiao},
+each partition implements a calibrated predictor by assigning to
+a block \(S\) its mass-weighted label mean
+\[
+ p_S=\frac{\sum_{x\in S}w_x\mu_x}{\sum_{x\in S}w_x}.
+\]
+If two blocks have the same mean, their union has the same mean and
+their contributions to the objective are unchanged. Conversely,
+the level sets of a calibrated predictor form a partition of this
+kind. Thus the minimum is attained and can be studied by checking
+partitions.
+
+Qiao \cite[Theorems~1--2]{qiao} proves an additive PTAS,
+an exact polynomial-time algorithm when the masses are
+uniform and labels noiseless, and exact NP-hardness when either
+restriction is removed. His Section~4 asks whether there is an
+additive FPTAS, as recorded in catalog Q460 \cite{catalog}.
+The exact hardness uses subset sum and supplies no
+inverse-polynomial approximation gap on a strongly hard family.
+
+\begin{theorem}\label{main}
+There is a deterministic algorithm which, for all such rational
+inputs and rational \(\epsilon>0\), gives the distance to additive error
+\(\epsilon\) in time polynomial in the input bit length and
+\(1/\epsilon\) if and only if \(\mathrm P=\mathrm{NP}\).
+The hardness direction uses only noiseless labels.
+\end{theorem}
+
+\section{The reduction}
+
+Take a strongly NP-complete 3-PARTITION instance with \(3m\) positive
+integers \(a_i\), target \(B\), total \(mB\), and
+\(B/4<a_i<B/2\) \cite{gj}. We use unnormalized masses and divide
+the resulting loss by the total mass. Make one distinct ordinary
+atom of weight \(a_i\), label \(1\) and forecast \(0\) for each item.
+For \(j=1,\ldots,m\) use the parameters
+\[
+ q_j=\frac14+\frac{j}{12m},\qquad
+ M=120m^2B,\qquad
+ \mu_j=q_j-\frac{(1-q_j)B}{M}.
+\]
+For each \(j\) create a pair of anchor atoms, both forecast \(q_j\).
+Give the label-\(1\) anchor weight \(M\mu_j\) and the label-\(0\)
+anchor weight \(M(1-\mu_j)\). The bounds \(1/4\le q_j\le1/3\)
+and \(B/M\le1/120\) give \(\mu_j>1/5\) and \(1-\mu_j\ge2/3\).
+The normalization is \(T=m(M+B)\). Let \(K=B\sum_jq_j\).
+
+Consider a partition with unnormalized loss below \(K+2/3\).
+If one block contains anchors of different indices, its loss
+on those two atoms is at least
+\[
+   (M/5)|q_j-q_k|\ \ge\ 2mB
+\]
+by the triangle inequality. This exceeds \(K+2/3\), using
+\(K\le mB/3\) and \(mB\ge1\). If there is no such block but a
+pair is split, its positive-label anchor belongs to a block of
+label-\(1\) atoms alone. That block's prediction is \(1\), so
+the anchor contributes at least
+\((M/5)(1-q_j)\ge 2M/15>K+2/3\).
+Consequently a partition below the cutoff keeps every pair
+intact and keeps different pairs apart. It may have ordinary-only
+blocks in addition to the \(m\) anchored blocks.
+
+\section{The loss from an incorrect load}
+
+Let \(s_j\) be the ordinary mass in anchor block \(j\),
+and let \(s_0\) be the mass outside all anchored blocks.
+An intact pair with ordinary mass \(s\) has mean
+and unnormalized loss
+\[
+ p_j(s)=\frac{M\mu_j+s}{M+s},\qquad
+ F_j(s)=s\,p_j(s)+M|p_j(s)-q_j|.
+\]
+Here
+\(p_j(s)-q_j=(1-q_j)(s-B)/(M+s)\).
+At \(s=B\) the loss is \(Bq_j\).
+For \(s\ge B\), substituting the positive sign gives
+\(F_j(s)=Bq_j+(s-B)\).
+For \(s\le B\), substitution gives
+\[
+ F_j(s)
+   =s q_j+\frac{(1-q_j)(B-s)(M-s)}{M+s}
+   \ \ge\ Bq_j-\tfrac13(B-s).
+\]
+The inequality uses \(M>B\) and \(q_j\le 1/3\).
+
+Write \(L_-=\sum_j(B-s_j)_+\) and
+\(L_+=\sum_j(s_j-B)_+\), with \(x_+=\max\{x,0\}\).
+Since \(\sum_js_j+s_0=mB\), we have \(L_-=L_++s_0\).
+An ordinary-only block has prediction \(1\) and loss equal
+to its mass. Thus a partition with all pairs intact and
+separate has total loss at least
+\[
+ K-\tfrac13 L_-+L_++s_0=K+\tfrac23 L_-.
+\]
+The loads are sums of indivisible integer weights.
+If \(L_-=0\), then \(s_0=0\), \(L_+=0\), and every load is
+\(B\). These assignments form a 3-partition because the size
+bounds force exactly three items in each block. Such a partition
+has loss \(K\). If there is no 3-partition, then \(L_-\ge1\).
+Together with the costs of mixed or split anchors this proves
+\[
+ \begin{array}{ll}
+ \text{YES:}&\caldist_D(f)=K/T,\\[2pt]
+ \text{NO:}&\caldist_D(f)\ge (K+2/3)/T.
+ \end{array}
+\]
+
+\section{Bit complexity and converse}
+
+All emitted masses and forecasts are rational with polynomial
+bit length. In the strongly hard restriction of 3-PARTITION,
+\(B\) is polynomially bounded, and \(T=m(120m^2B+B)\) is too.
+Run the putative additive FPTAS with
+\(\epsilon=1/(6T)\). A value within that error lies on the
+correct side of \((K+1/3)/T\), hence decides those instances
+in polynomial time. The same argument would put \(\mathrm{NP}\)
+in \(\mathrm{BPP}\) if the approximator used bounded-error
+randomization.
+
+The rational threshold decision belongs to \(\mathrm{NP}\):
+name a partition and evaluate its block means and costs exactly.
+Polynomial bit length follows by summing and multiplying the
+explicit rational numerators and denominators for finitely many
+atoms. If \(\mathrm P=\mathrm{NP}\), binary search on
+thresholds in \([0,1]\) gives the required error after
+\(O(\log(1/\epsilon))\) comparisons for \(0<\epsilon<1\).
+A witness can also be recovered by asking whether a prefix
+of the partition's certificate has an extension at the chosen cutoff.
+This proves Theorem~\ref{main}.
+
+The theorem concerns explicit weighted atoms. The unit-weight
+uniform/noiseless special case stays polynomial by \cite{qiao}.
+The proof leaves the uniform/noisy approximation question outside its scope.
+Fractional distance and repairs of split unit identities
+\cite{qz,wy} use different feasible sets. The result is
+consistent with an additive PTAS and does not address
+sample-based estimation or tolerant testing.
+
+\section*{Review and disclosure}
+Internally reviewed, not peer reviewed. No proof-assistant
+formalization is included. Under human direction, ChatGPT Astra 6.2
+(OpenAI) generated the discovery proof and original replay.
+OpenAI Codex performed the independent mathematical review.
+GPT-6.2 Sol (OpenAI) derived the derivative-free loss bound,
+checked the literature and prepared the revised manuscript,
+expanded replay and worked illustration. DannyExperiments is
+the project's citation identity. The manuscript has no byline.
+
+\begin{thebibliography}{9}
+\bibitem{qiao} M. Qiao, Computational and statistical hardness of
+calibration distance, 2026.
+\href{https://arxiv.org/abs/2603.18391v2}{arXiv:2603.18391v2}.
+\bibitem{catalog} Open Problems Catalog, Q460.
+\href{https://github.com/10m-u/open-problems-catalog/blob/ca8d4d44ba3db527f19f28928c240168f545ecfe/problems/computer_science_ai/classical-statistical-machine-learning.md\#q460}{Pinned entry}.
+\bibitem{gj} M. R. Garey and D. S. Johnson, Strong NP-completeness
+results: motivation, examples, and implications,
+\emph{J. ACM} 25 (1978), 499--508.
+\href{https://doi.org/10.1145/322077.322090}{DOI}.
+\bibitem{qz} M. Qiao and L. Zheng, On the distance from calibration in
+sequential prediction, \emph{Proc. COLT}, PMLR 247 (2024).
+\href{https://proceedings.mlr.press/v247/qiao24a.html}{Proceedings}.
+\bibitem{wy} Z. Wang and X. Yang, Sharp integrality gaps in calibration
+distance, 2026.
+\href{https://arxiv.org/abs/2610.05679v1}{arXiv:2610.05679v1}.
+\end{thebibliography}
+\end{document}

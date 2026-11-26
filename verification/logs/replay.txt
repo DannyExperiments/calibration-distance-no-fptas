@@ -1,0 +1,5 @@
+B=15, weights=(4, 4, 5, 5, 6, 6): 115,975 partitions; loss=75/8, excess=0, normalized distance=5/7696.
+B=15, weights=(4, 4, 4, 6, 6, 6): 115,975 partitions; loss=308925/28856, excess=4800/3607, normalized distance=20595/27759472.
+B=12, weights=(4, 4, 4, 4, 4, 4): 115,975 partitions; loss=15/2, excess=0, normalized distance=5/7696.
+Checked 21,462 exact single-block load identities.
+PASS: intact-pair witnesses, full partitions, and the 2/3 deficit bound.

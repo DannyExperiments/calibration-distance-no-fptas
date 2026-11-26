@@ -1,0 +1,29 @@
+{
+  "title": "No fully polynomial additive scheme for calibration distance unless P = NP",
+  "upload_type": "software",
+  "creators": [
+    {
+      "name": "DannyExperiments"
+    }
+  ],
+  "keywords": [
+    "calibration distance",
+    "additive approximation",
+    "strong NP-hardness",
+    "3-PARTITION",
+    "probabilistic calibration"
+  ],
+  "description": "<p>The distance from a supplied predictor to the nearest exactly calibrated deterministic predictor has a fully polynomial additive approximation scheme if and only if P = NP. Hardness already holds for explicit rational feature distributions with nonuniform masses and noiseless binary labels.</p><p>A reduction from strongly NP-complete 3-PARTITION assigns two heavy anchor atoms to each proposed bin. Their distinct forecasts make mixing or splitting pairs expensive. The exact block loss shows that each unit of aggregate load deficit forces at least two thirds of a unit of unnormalized excess. On strongly hard instances the normalizing mass is polynomial, giving the inverse-polynomial gap required to rule out an FPTAS.</p><p>Qiao's exact hardness and additive PTAS are prior results. The uniform-mass/noiseless exact algorithm and the fractional repair literature concern different hypotheses. Exact replay enumerates all partitions of three ten-atom examples and checks the loss identities. Includes a rotating worked illustration and an offline explorer. Internally reviewed, not peer reviewed. No proof-assistant formalization is included.</p><p>Under human direction, ChatGPT Astra 6.2 (OpenAI) generated the discovery proof and original replay. OpenAI Codex performed the independent mathematical review. GPT-6.2 Sol (OpenAI) derived the derivative-free loss bound, checked the literature and prepared the revised manuscript, expanded replay and worked illustration. DannyExperiments is the project's citation identity. The manuscript has no byline.</p><p>Release v1.0.0. https://github.com/DannyExperiments/calibration-distance-no-fptas/releases/tag/v1.0.0</p>",
+  "license": "other-closed",
+  "notes": "All rights reserved. Publicly downloadable files are supplied without a repository-wide reuse license.",
+  "publication_date": "2026-11-27",
+  "version": "1.0.0",
+  "access_right": "open",
+  "related_identifiers": [
+    {
+      "identifier": "https://github.com/DannyExperiments/calibration-distance-no-fptas/releases/tag/v1.0.0",
+      "relation": "isSupplementTo",
+      "resource_type": "software"
+    }
+  ]
+}
